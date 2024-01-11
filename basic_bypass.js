@@ -39,18 +39,18 @@ if (ObjC.available) {
     ];
     var f = Module.findExportByName("libSystem.B.dylib", "stat64");
     Interceptor.attach(f, {
-        onEnter: function(args) {
+        onEnter: function (args) {
             this.is_common_path = false;
             var arg = Memory.readUtf8String(args[0]);
             for (var path in paths) {
                 if (arg.indexOf(paths[path]) > -1) {
                     console.log("Hooking native function stat64: " + arg);
                     this.is_common_path = true;
-                    //return -1;
+                    return -1;
                 }
             }
         },
-        onLeave: function(retval) {
+        onLeave: function (retval) {
             if (this.is_common_path) {
                 console.log("stat64 bypass");
                 retval.replace(-1);
@@ -59,20 +59,20 @@ if (ObjC.available) {
     });
     var f = Module.findExportByName("libSystem.B.dylib", "stat");
     Interceptor.attach(f, {
-        onEnter: function(args) {
+        onEnter: function (args) {
             this.is_common_path = false;
             var arg = Memory.readUtf8String(args[0]);
             for (var path in paths) {
                 if (arg.indexOf(paths[path]) > -1) {
                     console.log("Hooking native function stat: " + arg);
                     this.is_common_path = true;
-                    //return -1;
+                    return -1;
                 }
             }
         },
-        onLeave: function(retval) {
+        onLeave: function (retval) {
             if (this.is_common_path) {
-                console.log("stat Bypass!!!");
+                console.log("stat bypass");
                 retval.replace(-1);
             }
         }
