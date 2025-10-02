@@ -114,6 +114,8 @@ LIBSYSTEM FUNCTIONS
 
 const libSystemModule = Process.getModuleByName('libSystem.B.dylib');
 
+// 1 :: File-based checks
+
 // name -> [stringArgIndices, isOnEnter]
 // Store only the index of the buffer's pointer for functions which store the result in a buffer, e.g. snprintf
 const libsystemStringFunctions = {
@@ -175,9 +177,9 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
                 if (performBacktrace) backtrace(this.context);
 
                 try {
-                    const replacement = Memory.allocUtf8String(".");
+                    const replacement = Memory.allocUtf8String(".".repeat(primaryStr.length));
                     args[primaryIdx] = replacement;
-                    console.log(`[!!!] Replaced "${primaryStr}" -> "."`);
+                    console.log(`[!!!] Redacted "${primaryStr}"`);
                 } catch (e) {
                     if (safeWriteUtf8String(args[primaryIdx], ".")) {
                         console.log(`[!!!] Overwrote buffer of "${primaryStr}" -> "."`);
@@ -188,7 +190,13 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
             }
         },
 
-        onLeave(_) {
+        onLeave(retval) {
+            if (name === "access") {
+                console.log(`[!!!] No file permissions for you with access() today.`);
+                retval.replace(ptr(-1));
+                return;
+            }
+
             if (onEnter) return;
 
             const savedPtr = this._savedArgPtr;
@@ -213,6 +221,62 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
         }
     });
 }
+
+// 2 :: Portscanning with bind() and connect()
+
+function ntohs(n) {
+    return ((n & 0xFF) << 8) | ((n >> 8) & 0xFF);
+}
+
+function getPortFromSockaddr(sockaddrPtr) {
+    if (sockaddrPtr === null) {
+        return -1;
+    }
+
+    try {
+        var family = sockaddrPtr.add(1).readU8();
+        if (family === 2) { // IPv4
+            var portNetOrder = sockaddrPtr.add(2).readU16();
+            return ntohs(portNetOrder);
+        }
+
+    } catch (e) {
+        return -1;
+    }
+
+    return -1;
+}
+
+const portscanningFunctions = ["bind", "connect"];
+const sexyPorts = [22, 44, 1337, 27042];
+
+for (const f of portscanningFunctions) {
+    Interceptor.attach(libSystemModule.getExportByName(f), {
+        onEnter(args) {
+            var sockaddrPtr = args[1];
+            this.port = getPortFromSockaddr(sockaddrPtr);
+            this.patch = sexyPorts.indexOf(this.port) !== -1;
+        },
+        onLeave(retval) {
+            if (this.patch) {
+                console.log(`[!!!] Detected portscanner for port ${this.port} with ${f}. Returning -1...`)
+                retval.replace(ptr(-1));
+            } else if (verbose) {
+                console.log(`[*] Called ${f} with port ${this.port}`);
+            }
+        }
+    });
+}
+
+// 3 :: Other checks utilizing libSystem.B.dylib
+
+Interceptor.attach(libSystemModule.getExportByName("fork"), {
+    onLeave(retval) {
+        console.log(`[!!!] We ain't jailbroken; we're in the sandbox. I swear! --fork()`)
+        retval.replace(ptr(-1));
+
+    }
+});
 
 /* 
 ----
@@ -253,17 +317,18 @@ for (const f of dyldFunctions) {
         },
 
         onLeave(retval) {
-            const tmp = retval;
+            const tmp = JSON.parse(JSON.stringify(retval));
             switch (f) {
                 case "_dyld_get_image_header":
                 case "_dyld_get_image_vmaddr_slide":
                 case "_dyld_image_count":
-                case "dlopen":
+                // Warning: Uncommenting this will very likely break the app!
+                //case "dlopen":
                 case "dlerror":
-                    retval = NULL;
+                    retval.replace(NULL);
                     break;
                 case "_dyld_get_image_name":
-                    retval = Memory.allocUtf8String(".");
+                    retval.replace(Memory.allocUtf8String("i_like_RASPberries.dylib"));
                     break;
                 default:
                     return;
@@ -344,5 +409,5 @@ if (ObjC.available) {
         console.log("[*] Exception: " + err);
     }
 } else {
-    console.log("[*] Objective-C Runtime is not available!");
+    console.log("[*] Can't hook Obj-C functions: Runtime not available")
 }

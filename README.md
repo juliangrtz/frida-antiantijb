@@ -38,7 +38,7 @@ frida -Uf target -l main.js
 
 ## TODO
 
-- fork()
 - add more detection strings
 - add fs checks (readable/writable)
-- improve dyld script
+- syscall hooking
+- improve dyld detections
