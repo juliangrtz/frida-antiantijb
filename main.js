@@ -61,7 +61,7 @@ HELPER FUNCTIONS
 function isEvilString(candidate) {
     for (const evil of cesspool) {
         if (candidate.toLowerCase().indexOf(evil) !== -1) {
-            console.log("[*] Found suspicious string: " + candidate);
+            console.log("[!!!] Found suspicious string: " + candidate);
             return true;
         }
     }
@@ -112,7 +112,7 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
                 return;
             }
 
-            if (name == "strcmp" || name == "strstr") {
+            if (["strstr", "strcmp", "symlink"].indexOf(name) !== -1) {
                 var str2 = args[idx + 1].readUtf8String();
                 console.log("[*] " + name + "(\"" + str + "\"" + ", \"" + str2 + "\")");
             } else {
@@ -122,7 +122,7 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
             if (isEvilString(str)) {
                 var strReplacement = Memory.allocUtf8String(".");
                 args[idx] = strReplacement;
-                console.log("[!] Replaced \"" + str + "\"");
+                console.log("[!!!] Replaced \"" + str + "\"");
             }
         },
 
@@ -141,7 +141,7 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
 
             if (isEvilString(str)) {
                 tmp.writeUtf8String(".");
-                console.log("[!] Replaced \"" + str + "\"");
+                console.log("[!!!] Replaced \"" + str + "\"");
             }
         }
     });
