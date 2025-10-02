@@ -1,8 +1,14 @@
 # frida-antiantijb
 
-A few simple jailbreak detection bypasses based on Frida. They are far from complete yet. Inject `main.js` for a basic bypass.
+A few simple jailbreak detection bypasses based on Frida. They are far from complete yet.
 
 Proper RASP software will laugh at this.
+
+## Usage
+
+```bash
+frida -Uf target -l main.js
+```
 
 ## Example output
 
