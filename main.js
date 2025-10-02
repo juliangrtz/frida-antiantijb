@@ -50,7 +50,24 @@ const cesspool = [
     "terminal",
     "trollstore",
     "winterboard",
+    // 🙃
+    "bi.txt",
+    "ii.txt",
+    "config-encrypt.txt",
+    "jigsaw.txt"
 ];
+
+const performBacktrace = true;
+
+Process.setExceptionHandler(function (exp) {
+    console.log(`${exp.type} @ ${exp.address}`);
+
+    let backtrace = Thread.backtrace(exp.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress);
+    for (let i in backtrace)
+        console.log(backtrace[i]);
+
+    return false;
+});
 
 /* 
 ----------------
@@ -120,6 +137,12 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
             }
 
             if (isEvilString(str)) {
+                if (performBacktrace) {
+                    let backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress);
+                    for (let i in backtrace)
+                        console.log(backtrace[i]);
+                }
+
                 var strReplacement = Memory.allocUtf8String(".");
                 args[idx] = strReplacement;
                 console.log("[!!!] Replaced \"" + str + "\"");
@@ -140,6 +163,12 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
             console.log("[*] " + name + "(\"" + str + "\")");
 
             if (isEvilString(str)) {
+                if (performBacktrace) {
+                    let backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress);
+                    for (let i in backtrace)
+                        console.log(backtrace[i]);
+                }
+
                 tmp.writeUtf8String(".");
                 console.log("[!!!] Replaced \"" + str + "\"");
             }
