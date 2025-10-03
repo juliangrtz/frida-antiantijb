@@ -64,6 +64,30 @@ HELPER FUNCTIONS
 ----------------
 */
 
+const idaBase = NULL; // Replace this with the image base in IDA to obtain IDA-friendly addresses.
+const memoryBase = Process.mainModule.base;
+
+function memAddress(idaAddr) {
+    return ptr(memoryBase).add(ptr(idaAddr).sub(idaBase));
+}
+
+function idaAddress(memAddr) {
+    return ptr(idaBase).add(ptr(memAddr).sub(memoryBase));
+}
+
+function formatAddress(address) {
+    return `0x${idaBase == NULL ? address.toString(16) : idaAddress(address).toString(16)}`;
+}
+
+function addressToFileOffset(addr) {
+    var module = Process.findModuleByAddress(addr);
+    if (module) {
+        return ptr(addr).sub(module.base);
+    } else {
+        return ptr(addr);
+    }
+}
+
 function isEvilString(candidate) {
     for (const evil of cesspool) {
         if (candidate.toLowerCase().indexOf(evil) !== -1) {
