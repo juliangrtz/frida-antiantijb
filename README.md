@@ -40,5 +40,9 @@ frida -Uf target -l main.js
 
 - add more detection strings
 - add fs checks (readable/writable)
+  - writeToFile
+  - isExecutableFileAtPath
+  - removeItemAtPath
+  - moveItemAtURL
 - syscall hooking
 - improve dyld detections

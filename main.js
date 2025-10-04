@@ -12,6 +12,8 @@ const cesspool = [
     "/usr/bin/cycript",
     "/usr/bin/ssh",
     "/usr/bin/sshd",
+    "/usr/sbin/ssh",
+    "/usr/sbin/sshd",
     "/usr/lib/libhooker.dylib",
     "/usr/libexec/sftp-server",
     "/usr/libexec/ssh-keysign",
@@ -21,6 +23,7 @@ const cesspool = [
     "/var/lib/dpkg/info/mobileterminal.list",
     "/var/lib/dpkg/info/mobileterminal.postinst",
     "/var/log/syslog",
+    "jailbreak.txt",
     "blackra1n",
     "comle.uikit.eventfetch-th",
     "cydia",
@@ -201,7 +204,7 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
                 if (performBacktrace) backtrace(this.context);
 
                 try {
-                    const replacement = Memory.allocUtf8String(".".repeat(primaryStr.length));
+                    const replacement = Memory.allocUtf8String("*".repeat(primaryStr.length));
                     args[primaryIdx] = replacement;
                     console.log(`[!!!] Redacted "${primaryStr}"`);
                 } catch (e) {
@@ -214,13 +217,7 @@ for (const [name, params] of Object.entries(libsystemStringFunctions)) {
             }
         },
 
-        onLeave(retval) {
-            if (name === "access") {
-                console.log(`[!!!] No file permissions for you with access() today.`);
-                retval.replace(ptr(-1));
-                return;
-            }
-
+        onLeave(_) {
             if (onEnter) return;
 
             const savedPtr = this._savedArgPtr;
@@ -302,6 +299,24 @@ Interceptor.attach(libSystemModule.getExportByName("fork"), {
     }
 });
 
+Interceptor.attach(libSystemModule.getExportByName("xpc_pipe_routine_with_flags"), {
+    onLeave: function (retval) {
+        // We completely forbid this. 'tis a shame if a process legitimately uses XPC!
+        console.log("[!] xpc_pipe_routine_with_flags()");
+        retval.replace(ptr(1));
+    }
+});
+
+Interceptor.attach(libSystemModule.getExportByName("bootstrap_look_up"), {
+    onEnter: function (args) {
+        var str = args[1].readCString();
+        if (cesspool.includes(str)) {
+            console.log(`[!] bootstrap_look_up(${str})`);
+            args[1].writeUtf8String("*".repeat(str.length));
+        }
+    }
+});
+
 /* 
 ----
 DYLD
@@ -370,63 +385,40 @@ OBJECTIVE C FUNCTIONS
 */
 
 // Taken from https://gist.github.com/izadgot/5783334b11563fb08fee4cd250455ede
-// Might have to be revised.
+
 
 if (ObjC.available) {
     try {
         const nsFileManager = ObjC.classes.NSFileManager;
-        const uiApplication = ObjC.classes.UIApplication;
 
         Interceptor.attach(nsFileManager["- fileExistsAtPath:"].implementation, {
             onEnter(args) {
-                this.is_common_path = false;
-                try {
-                    this.path = (args[2].isNull() ? "" : ObjC.Object(args[2]).toString());
-                } catch (e) {
-                    this.path = "<invalid>";
-                }
-
-                if (cesspool.indexOf(this.path) !== -1) {
-                    this.is_common_path = true;
-                }
+                const path = (args[2].isNull() ? "" : ObjC.Object(args[2]).toString());
+                console.log(`[!] fileExistsAtPath: ${path}`);
             },
             onLeave(retval) {
-                if (!this.is_common_path) return;
-
-                if (retval.isNull()) {
-                    console.log(`[*] fileExistsAtPath: try to check for ${this.path} failed`);
-                    return;
-                }
-
-                console.log(
-                    `[*] fileExistsAtPath: check for ${this.path} was successful with: ${retval.toString()}, marking it as failed.`
-                );
-                retval.replace(ptr("0x0"));
+                retval.replace(NULL);
             },
         });
 
-        Interceptor.attach(uiApplication["- canOpenURL:"].implementation, {
+        Interceptor.attach(nsFileManager["- isReadableFileAtPath:"].implementation, {
             onEnter(args) {
-                this.is_flagged = false;
-                try {
-                    this.path = (args[2].isNull() ? "" : ObjC.Object(args[2]).toString());
-                } catch (e) {
-                    this.path = "<invalid>";
-                }
-
-                const app = this.path.split(":")[0].toLowerCase();
-                if (cesspool.indexOf(app) !== -1) {
-                    this.is_flagged = true;
-                }
+                const path = (args[2].isNull() ? "" : ObjC.Object(args[2]).toString());
+                console.log("[!] isReadableFileAtPath: " + path.toString());
             },
             onLeave(retval) {
-                if (!this.is_flagged) return;
-                if (retval.isNull()) return;
+                retval.replace(NULL);
+            }
+        });
 
-                console.log(
-                    `[*] canOpenURL: check for ${this.path} was successful with: ${retval.toString()}, marking it as failed.`
-                );
-                retval.replace(ptr("0x0"));
+        const uiApplication = ObjC.classes.UIApplication;
+        Interceptor.attach(uiApplication["- canOpenURL:"].implementation, {
+            onEnter(args) {
+                this.path = (args[2].isNull() ? "" : ObjC.Object(args[2]).toString());
+                console.log(`[!] canOpenURL: ${this.path}`);
+            },
+            onLeave(retval) {
+                retval.replace(NULL);
             },
         });
     } catch (err) {
