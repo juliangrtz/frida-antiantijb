@@ -4,6 +4,12 @@ A few simple jailbreak detection bypasses based on Frida. They are far from comp
 
 Proper RASP software will laugh at this.
 
+## Installation
+
+```bash
+npm install
+```
+
 ## Usage
 
 ```bash
@@ -39,10 +45,5 @@ frida -Uf target -l main.js
 ## TODO
 
 - add more detection strings
-- add fs checks (readable/writable)
-  - writeToFile
-  - isExecutableFileAtPath
-  - removeItemAtPath
-  - moveItemAtURL
 - syscall hooking
 - improve dyld detections

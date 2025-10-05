@@ -1,3 +1,5 @@
 node_modules/
 package*.json
 secret/
+agent/secret/
+main.js
