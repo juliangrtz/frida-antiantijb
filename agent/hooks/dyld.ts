@@ -1,3 +1,5 @@
+import { isInRightModule } from "../utils";
+
 const libSystemModule = Process.getModuleByName('libSystem.B.dylib');
 
 const dyldFunctions = [
@@ -19,6 +21,11 @@ const dyldFunctions = [
 for (const f of dyldFunctions) {
     Interceptor.attach(libSystemModule.getExportByName(f), {
         onEnter(args) {
+            if (!isInRightModule(this.returnAddress)) {
+                this.skip = true;
+                return;
+            }
+
             if (f === "dlsym") {
                 console.log("[*] dlsym(0x" + args[0].toString(16) + ", \"" + args[1].readUtf8String() + "\")");
             } else if (f === "dlopen" || f === "dlopen_preflight") {
@@ -33,6 +40,8 @@ for (const f of dyldFunctions) {
         },
 
         onLeave(retval) {
+            if (this.skip) return;
+
             const tmp = JSON.parse(JSON.stringify(retval));
             switch (f) {
                 case "_dyld_get_image_header":

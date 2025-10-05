@@ -41,6 +41,11 @@ export function isEvilString(candidate: string) {
     return false;
 }
 
+export function isInRightModule(retAddr: NativePointer) {
+    const mod = Process.findModuleByAddress(retAddr);
+    return mod && (Config.modules.indexOf(mod.name) !== -1 || mod.name === MAIN_MODULE_NAME);
+}
+
 export function safeReadUtf8String(ptr: NativePointer) {
     try {
         if (ptr === null) return null;

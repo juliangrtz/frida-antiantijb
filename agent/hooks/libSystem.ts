@@ -1,4 +1,4 @@
-import { backtrace, MAIN_MODULE_NAME, safeReadUtf8String, safeWriteUtf8String, isEvilString } from "../utils";
+import { backtrace, MAIN_MODULE_NAME, safeReadUtf8String, safeWriteUtf8String, isEvilString, isInRightModule } from "../utils";
 import { Config } from "../config";
 
 const libSystemModule = Process.getModuleByName("libSystem.B.dylib");
@@ -25,12 +25,6 @@ const libsystemStringFunctions: StringFunctionConfig = {
     vprintf: [[0], false],
     vsnprintf: [[0], false],
 };
-
-// We don't want to mess with function calls outside the main module!
-function isInRightModule(retAddr: NativePointer) {
-    const mod = Process.findModuleByAddress(retAddr);
-    return mod && mod.name === MAIN_MODULE_NAME;
-}
 
 for (const [name, [indices, onEnter]] of Object.entries(libsystemStringFunctions)) {
     let target = libSystemModule.findExportByName(name);
