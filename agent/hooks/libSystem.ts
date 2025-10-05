@@ -1,7 +1,6 @@
-import { backtrace, MAIN_MODULE_NAME, safeReadUtf8String, safeWriteUtf8String, isEvilString, isInRightModule } from "../utils";
+import { backtrace, safeReadUtf8String, safeWriteUtf8String, isEvilString, isInRightModule } from "../utils";
 import { Config } from "../config";
-
-const libSystemModule = Process.getModuleByName("libSystem.B.dylib");
+import { LIBSYSTEM_MODULE } from "../modules";
 
 // 1 :: File-based checks
 
@@ -27,13 +26,7 @@ const libsystemStringFunctions: StringFunctionConfig = {
 };
 
 for (const [name, [indices, onEnter]] of Object.entries(libsystemStringFunctions)) {
-    let target = libSystemModule.findExportByName(name);
-    if (target === null) {
-        console.warn(`[*] libSystem export ${name} was not found!`);
-        continue;
-    }
-
-    Interceptor.attach(target, {
+    Interceptor.attach(LIBSYSTEM_MODULE.getExportByName(name), {
         onEnter(args) {
             if (!isInRightModule(this.returnAddress)) {
                 this.skip = true;
@@ -136,7 +129,7 @@ const portscanningFunctions = ["bind", "connect"];
 const sexyPorts = [22, 44, 1337, 27042];
 
 for (const f of portscanningFunctions) {
-    Interceptor.attach(libSystemModule.getExportByName(f), {
+    Interceptor.attach(LIBSYSTEM_MODULE.getExportByName(f), {
         onEnter(args) {
             var sockaddrPtr = args[1];
             this.port = getPortFromSockaddr(sockaddrPtr);
@@ -155,14 +148,14 @@ for (const f of portscanningFunctions) {
 
 // 3 :: Other checks utilizing libSystem.B.dylib
 
-Interceptor.attach(libSystemModule.getExportByName("fork"), {
+Interceptor.attach(LIBSYSTEM_MODULE.getExportByName("fork"), {
     onLeave(retval) {
         console.log(`[!!!] We ain't jailbroken; we're in the sandbox. I swear! --fork()`)
         retval.replace(ptr(-1));
     }
 });
 
-Interceptor.attach(libSystemModule.getExportByName("xpc_pipe_routine_with_flags"), {
+Interceptor.attach(LIBSYSTEM_MODULE.getExportByName("xpc_pipe_routine_with_flags"), {
     onLeave: function (retval) {
         // We completely forbid this. 'tis a shame if a process legitimately uses XPC!
         console.log("[!] xpc_pipe_routine_with_flags()");
@@ -170,7 +163,7 @@ Interceptor.attach(libSystemModule.getExportByName("xpc_pipe_routine_with_flags"
     }
 });
 
-Interceptor.attach(libSystemModule.getExportByName("bootstrap_look_up"), {
+Interceptor.attach(LIBSYSTEM_MODULE.getExportByName("bootstrap_look_up"), {
     onEnter: function (args) {
         var str = args[1].readCString();
         if (str && isEvilString(str)) {

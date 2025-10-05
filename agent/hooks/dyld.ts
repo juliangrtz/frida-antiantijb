@@ -1,6 +1,6 @@
-import { isInRightModule } from "../utils";
-
-const libSystemModule = Process.getModuleByName('libSystem.B.dylib');
+import { Config } from "../config";
+import { LIBSYSTEM_MODULE } from "../modules";
+import { isEvilString, isInRightModule } from "../utils";
 
 const dyldFunctions = [
     // https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/dyld.3.html
@@ -19,7 +19,7 @@ const dyldFunctions = [
 ];
 
 for (const f of dyldFunctions) {
-    Interceptor.attach(libSystemModule.getExportByName(f), {
+    Interceptor.attach(LIBSYSTEM_MODULE.getExportByName(f), {
         onEnter(args) {
             if (!isInRightModule(this.returnAddress)) {
                 this.skip = true;
@@ -62,6 +62,40 @@ for (const f of dyldFunctions) {
             console.log("[!] Returning", retval, "instead of", tmp, "for " + f + ".");
         }
     });
+}
+
+function showLoadedImages() {
+    const dyldImageCount = LIBSYSTEM_MODULE.findExportByName("_dyld_image_count");
+    const dyldGetImageName = LIBSYSTEM_MODULE.findExportByName("_dyld_get_image_name");
+
+    if (!dyldImageCount || !dyldGetImageName) {
+        console.error("Failed to locate _dyld_image_count and _dyld_get_image_name.");
+        return;
+    }
+
+    const _dyld_image_count = new NativeFunction(dyldImageCount, 'uint32', []);
+    const _dyld_get_image_name = new NativeFunction(dyldGetImageName, 'pointer', ['uint32']);
+
+    const count = _dyld_image_count();
+    console.log("Loaded images: " + count);
+
+    for (let i = 0; i < count; i++) {
+        const namePtr = _dyld_get_image_name(i);
+        if (!namePtr.isNull()) {
+            const name = namePtr.readUtf8String();
+            if (!name) continue
+
+            if (isEvilString(name)) {
+                console.error(`[${i}] ${name}`);
+            } else {
+                console.log(`[${i}] ${name}`);
+            }
+        }
+    }
+}
+
+if (Config.showLoadedImages) {
+    showLoadedImages();
 }
 
 export default {};

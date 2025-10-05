@@ -6,6 +6,9 @@ if (Config.hooks["dyld"]) {
 if (Config.hooks["libSystem"]) {
     import("./hooks/libSystem.ts");
 }
+if (Config.hooks["antiDebug"]) {
+    import("./hooks/antidebug.ts");
+}
 if (Config.hooks["objc"]) {
     import("./hooks/objc.ts");
 }
@@ -16,7 +19,6 @@ if (Config.hooks["exitFunctions"]) {
     import("./hooks/exitFunctions.ts");
 }
 
-// For your own hooks.
 import("./hooks/custom.ts")
 
 import { backtrace } from "./utils";

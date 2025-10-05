@@ -3,6 +3,7 @@
 
 /*
 import { memAddress } from "../utils";
+import { putBImm } from "../utils";
 
 Interceptor.attach(memAddress("0x103E66578"), {
     onEnter: function (args) {
@@ -14,6 +15,9 @@ Interceptor.attach(memAddress("0x103E66578"), {
         console.error("[!!!] Deobfuscated string: " + this.destPtr.readUtf8String());
     }
 });
+
+putBImm("0x103F29528", "0x100D40240");
+
 */
 
 export default {};

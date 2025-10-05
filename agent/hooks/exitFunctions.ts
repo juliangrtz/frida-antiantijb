@@ -1,3 +1,4 @@
+import { LIBOBJC_MODULE, LIBSYSTEM_MODULE } from "../modules";
 import { backtrace } from "../utils";
 
 const exitFunctions = [
@@ -9,10 +10,8 @@ const exitFunctions = [
     // TODO signal?
 ];
 
-const libSystemModule = Process.getModuleByName("libSystem.B.dylib")
-
 exitFunctions.forEach(f => {
-    Interceptor.attach(libSystemModule.getExportByName(f.name), {
+    Interceptor.attach(LIBSYSTEM_MODULE.getExportByName(f.name), {
         onEnter() {
             console.log(`[!!!] ${f.name} call, the app is about to terminate`);
             backtrace(this.context);
@@ -20,8 +19,7 @@ exitFunctions.forEach(f => {
     });
 });
 
-const libobjCModule = Process.getModuleByName("libobjc.A.dylib");
-Interceptor.attach(libobjCModule.getExportByName("exit"), {
+Interceptor.attach(LIBOBJC_MODULE.getExportByName("exit"), {
     onEnter(_) {
         console.error("[!!!] libobjc EXIT CALLED");
         backtrace(this.context);

@@ -4,7 +4,7 @@ import { Config } from "./config";
 type address = string | number
 
 // Replace this with the image base in IDA to obtain IDA-friendly addresses.
-const idaBase = NULL;
+const idaBase = ptr("0x100D38000");
 
 export const MAIN_MODULE_NAME = Process.mainModule.name;
 export const MEMORY_BASE = Process.mainModule.base;
@@ -94,4 +94,62 @@ export function stalkCalls() {
             }
         });
     });
+}
+
+function protectPage(p: NativePointer) {
+    var mod = Process.findModuleByAddress(p);
+    if (!mod) {
+        throw new Error("Address is not inside a known module: " + p);
+    }
+
+    var pageSize = Process.pageSize || 0x1000;
+    var pageStart = ptr(Math.floor(p.toInt32() / pageSize) * pageSize);
+
+    try {
+        Memory.protect(pageStart, pageSize, 'rwx');
+    } catch (e) {
+        throw new Error("Memory.protect failed: " + e);
+    }
+}
+
+export function putBImm(address: string, target: string) {
+    try {
+        const p = memAddress(address);
+        protectPage(p);
+
+        Memory.patchCode(p, 4, function (code) {
+            var writer = new Arm64Writer(code);
+            try {
+                writer.putBImm(memAddress(target));
+                writer.flush();
+            } finally {
+                writer.dispose();
+            }
+        });
+
+        console.log("[*] Put B at " + p);
+    } catch (err) {
+        console.log("[*] Error:", err);
+    }
+}
+
+export function putRet(address: string) {
+    try {
+        const p = memAddress(address);
+        protectPage(p);
+
+        Memory.patchCode(p, 4, function (code) {
+            var writer = new Arm64Writer(code);
+            try {
+                writer.putRet();
+                writer.flush();
+            } finally {
+                writer.dispose();
+            }
+        });
+
+        console.log("[*] Put RET at " + p);
+    } catch (err) {
+        console.log("[*] Error:", err);
+    }
 }
