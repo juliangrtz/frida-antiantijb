@@ -2,3 +2,4 @@ node_modules/
 secret/
 agent/secret/
 main.js
+agent/tracer/

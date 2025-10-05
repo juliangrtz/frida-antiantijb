@@ -41,8 +41,12 @@ if (ObjC.available) {
         const nsDictionary = ObjC.classes.NSDictionary;
         Interceptor.attach(nsDictionary[`+ dictionaryWithContentsOfFile:`].implementation, getCallbacks("dictionaryWithContentsOfFile"));
 
-        var nsString = ObjC.classes.NSString;
+        const nsString = ObjC.classes.NSString;
         Interceptor.attach(nsString["- writeToFile:atomically:encoding:error:"].implementation, getCallbacks("writeToFile"));
+
+        const nsData = ObjC.classes.NSData;
+        Interceptor.attach(nsData["+ dataWithContentsOfFile:options:error:"].implementation, getCallbacks("dataWithContentsOfFile:options:error"));
+        Interceptor.attach(nsData["+ dataWithContentsOfFile:"].implementation, getCallbacks("dataWithContentsOfFile"));
     } catch (err) {
         console.log("[*] Exception: " + err);
     }

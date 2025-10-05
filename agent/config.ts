@@ -11,5 +11,6 @@ export const Config = {
         "libSystem": true,
         "objc": true,
         "svc": false,
+        "exitFunctions": true,
     }
 }

@@ -9,6 +9,7 @@ export const CESSPOOL = [
     "/private/etc/profile.d/terminal.sh",
     "/private/var/lib/apt",
     "/private/var/stash",
+    "/private/preboot",
     "/usr/bin/cycript",
     "/usr/bin/ssh",
     "/usr/bin/sshd",

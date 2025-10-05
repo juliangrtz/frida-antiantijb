@@ -71,3 +71,22 @@ export function backtrace(ctx: CpuContext) {
         }
     });
 }
+
+export function stalkCalls() {
+    Process.enumerateThreads().forEach(function (thread) {
+        Stalker.follow(thread.id, {
+            events: {
+                call: true,
+                ret: false,
+                exec: false,
+                block: false,
+                compile: false
+            },
+            onCallSummary: function (summary) {
+                for (var target in summary) {
+                    console.log("Thread " + thread.id + " Call to: " + `${idaAddress(target)}` + " (" + summary[target] + " times)");
+                }
+            }
+        });
+    });
+}

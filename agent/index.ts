@@ -12,6 +12,12 @@ if (Config.hooks["objc"]) {
 if (Config.hooks["svc"]) {
     import("./hooks/svcs.ts");
 }
+if (Config.hooks["exitFunctions"]) {
+    import("./hooks/exitFunctions.ts");
+}
+
+// For your own hooks.
+import("./hooks/custom.ts")
 
 import { backtrace } from "./utils";
 

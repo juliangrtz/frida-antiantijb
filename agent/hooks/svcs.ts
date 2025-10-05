@@ -19,7 +19,7 @@ function scanModuleForSvc(targetModule: Module) {
     const ranges = targetModule.enumerateRanges('r-x');
     for (const r of ranges) {
         try {
-            Memory.scan(targetModule.base, targetModule.size, "01 10 00 D4", { // TODO Handle ?? ?? ?? D4, Yes I'm looking at you, Arxan
+            Memory.scan(r.base, r.size, "01 10 00 D4", { // TODO Handle ?? ?? ?? D4, Yes I'm looking at you, Arxan
                 onMatch: function (address, _) {
                     if (attachedCount >= MAX_HOOKS) return;
                     try {
