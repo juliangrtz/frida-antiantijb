@@ -45,5 +45,4 @@ frida -Uf target -l main.js
 ## TODO
 
 - add more detection strings
-- syscall hooking
 - improve dyld detections

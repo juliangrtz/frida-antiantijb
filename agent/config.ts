@@ -4,4 +4,12 @@ export const Config = {
 
     // Whether to perform backtraces when detections are found.
     performBacktrace: false,
+
+    // What to hook.
+    hooks: {
+        "dyld": true,
+        "libSystem": true,
+        "objc": true,
+        "svc": false,
+    }
 }

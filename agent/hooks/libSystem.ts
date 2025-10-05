@@ -185,3 +185,5 @@ Interceptor.attach(libSystemModule.getExportByName("bootstrap_look_up"), {
         }
     }
 });
+
+export default {};

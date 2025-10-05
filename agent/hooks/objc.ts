@@ -49,3 +49,5 @@ if (ObjC.available) {
 } else {
     console.log("[*] Can't hook Obj-C functions: Runtime not available")
 }
+
+export default {};

@@ -26,7 +26,7 @@ for (const f of dyldFunctions) {
             } else if (f === "_dyld_register_func_for_add_image" || f == "_dyld_register_func_for_remove_image") {
                 console.log("[*] " + f + "(0x" + args[0].toString(16) + ")");
             } else if (f === "dladdr") {
-                console.log("[*] dladdr(0x" + args[0].toString(16) + ")");
+                console.log("[*] dladdr(0x" + args[0].toString(16) + ") -> " + Process.findModuleByAddress(args[0])?.name);
             } else {
                 console.log("[*]", f + "()");
             }
@@ -54,3 +54,5 @@ for (const f of dyldFunctions) {
         }
     });
 }
+
+export default {};
