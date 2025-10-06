@@ -3,3 +3,4 @@ secret/
 agent/secret/
 main.js
 agent/tracer/
+.DS_Store

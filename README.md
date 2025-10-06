@@ -7,8 +7,11 @@ Proper RASP software will laugh at this.
 ## Installation
 
 ```bash
+npm install frida-objc-bridge
 npm install
 ```
+
+`frida-objc-bridge` is needed to hook certain ObjC functions (see `agent/hooks/objc.ts`).
 
 ## Usage
 
@@ -44,5 +47,8 @@ frida -Uf target -l main.js
 
 ## TODO
 
+- more robust syscall handling
+- implement lesser known/private detection methods
 - add more detection strings
 - improve dyld detections
+- try to detect upcoming deliberate crashes
